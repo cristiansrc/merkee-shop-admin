@@ -19,13 +19,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid,
   Divider,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { Visibility as ViewIcon } from '@mui/icons-material';
 import { RootState, AppDispatch } from '../../store';
 import { fetchOrders, fetchOrderById, clearSelectedOrder } from '../../store/ordersSlice';
