@@ -102,12 +102,16 @@ npm run test:watch        # vitest en modo watch
   (`VITE_USE_MOCKS=true`) y requiere la API real conectada para el flujo
   completo.
 
-## Estado de AWS
+## Estado de AWS (revisado 2026-08-18)
 
-El admin se sirve como SPA estática, en la propuesta detrás de **S3 privado +
-CloudFront/OAC** (ADR-006), dominio/origen distinto al storefront. **AWS no está
-configurado**; localmente el build se sirve con `vite preview`. No se solicitan
-secretos por chat.
+El admin se sirve como SPA estática hospedada en **S3 privado + CloudFront/OAC**
+(ADR-006), dominio/origen distinto al storefront. **AWS configurado** en cuenta de
+aprendizaje, región `us-east-1`, un único ambiente: bucket `merkee-frontend-admin`
+con distribución CloudFront `E119IKP00L5RU` → `admin.merkee.shop` desplegados. DNS
+gestionado en Spaceship; `api.merkee.shop` y `admin.merkee.shop` existen;
+`swagger.merkee.shop` pendiente de distribución/origen. No se afirma despliegue
+productivo terminado; el estado del despliegue es **en despliegue / pendiente de
+verificación**. No se solicitan secretos por chat.
 
 ## Notas de seguridad
 
