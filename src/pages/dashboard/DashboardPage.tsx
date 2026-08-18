@@ -8,9 +8,9 @@ import {
   CardActions,
   Typography,
   Button,
-  Grid,
   Avatar,
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import {
   Category as CategoryIcon,
   Inventory as InventoryIcon,
