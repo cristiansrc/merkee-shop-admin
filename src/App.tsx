@@ -80,24 +80,24 @@ function App() {
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
-        <Refine
-          dataProvider={dataProvider}
-          authProvider={authProvider}
-          routerProvider={routerProvider}
-          resources={resources}
-          options={{
-            syncWithLocation: false,
-            warnWhenUnsavedChanges: false,
-            redirect: {
-              afterCreate: 'list',
-              afterEdit: 'list',
-              afterClone: 'list',
-            },
-          }}
-        >
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <BrowserRouter>
+        <BrowserRouter>
+          <Refine
+            dataProvider={dataProvider}
+            authProvider={authProvider}
+            routerProvider={routerProvider}
+            resources={resources}
+            options={{
+              syncWithLocation: false,
+              warnWhenUnsavedChanges: false,
+              redirect: {
+                afterCreate: 'list',
+                afterEdit: 'list',
+                afterClone: 'list',
+              },
+            }}
+          >
+            <ThemeProvider theme={theme}>
+              <CssBaseline />
               <Routes>
                 {/* Ruta de login */}
                 <Route path="/login" element={<LoginPage />} />
@@ -135,9 +135,9 @@ function App() {
                 {/* Redirigir rutas no encontradas */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-            </BrowserRouter>
-          </ThemeProvider>
-        </Refine>
+            </ThemeProvider>
+          </Refine>
+        </BrowserRouter>
       </QueryClientProvider>
     </Provider>
   );
