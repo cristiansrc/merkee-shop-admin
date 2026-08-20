@@ -20,7 +20,7 @@ const initialState: AuthState = {
 };
 
 // Flag para usar mocks cuando la API no está disponible
-const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true' || true; // Default a true para desarrollo
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 export const login = createAsyncThunk(
   'auth/login',

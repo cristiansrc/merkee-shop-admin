@@ -16,6 +16,9 @@ jobs:
   validate:
     name: Validate Code
     runs-on: ubuntu-latest
+    env:
+      VITE_API_BASE_URL: https://api.merkee.shop/v1
+      VITE_USE_MOCKS: 'false'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -43,6 +46,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate
     environment: production
+    env:
+      VITE_API_BASE_URL: https://api.merkee.shop/v1
+      VITE_USE_MOCKS: 'false'
 
     steps:
       - name: Checkout Code

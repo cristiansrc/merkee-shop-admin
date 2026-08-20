@@ -19,7 +19,7 @@ const initialState: OrdersState = {
   selectedOrder: null,
 };
 
-const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true' || true;
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 export const fetchOrders = createAsyncThunk(
   'orders/fetchAll',

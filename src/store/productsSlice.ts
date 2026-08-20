@@ -21,7 +21,7 @@ const initialState: ProductsState = {
   operationError: null,
 };
 
-const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true' || true;
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 export const fetchProducts = createAsyncThunk(
   'products/fetchAll',

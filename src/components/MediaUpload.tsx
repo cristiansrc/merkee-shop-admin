@@ -36,7 +36,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true' || true;
+  const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
   const validateFile = (file: File): string | null => {
     if (!ALLOWED_TYPES.includes(file.type)) {

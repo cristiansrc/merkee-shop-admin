@@ -19,7 +19,7 @@ const initialState: CategoriesState = {
   operationError: null,
 };
 
-const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true' || true;
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 export const fetchCategories = createAsyncThunk(
   'categories/fetchAll',

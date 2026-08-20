@@ -17,7 +17,7 @@ const initialState: AdminState = {
   success: false,
 };
 
-const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true' || true;
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 export const provisionAdmin = createAsyncThunk(
   'admin/provision',
