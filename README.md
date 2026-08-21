@@ -102,16 +102,28 @@ npm run test:watch        # vitest en modo watch
   (`VITE_USE_MOCKS=true`) y requiere la API real conectada para el flujo
   completo.
 
-## Estado de AWS (revisado 2026-08-18)
+## Estado de AWS (rehidratado 2026-08-21; histórico 2026-08-18)
 
 El admin se sirve como SPA estática hospedada en **S3 privado + CloudFront/OAC**
 (ADR-006), dominio/origen distinto al storefront. **AWS configurado** en cuenta de
 aprendizaje, región `us-east-1`, un único ambiente: bucket `merkee-frontend-admin`
 con distribución CloudFront `E119IKP00L5RU` → `admin.merkee.shop` desplegados. DNS
 gestionado en Spaceship; `api.merkee.shop` y `admin.merkee.shop` existen;
-`swagger.merkee.shop` pendiente de distribución/origen. No se afirma despliegue
-productivo terminado; el estado del despliegue es **en despliegue / pendiente de
-verificación**. No se solicitan secretos por chat.
+`swagger.merkee.shop` pendiente de distribución/origen. **Verificado 2026-08-21:**
+admin conectado a API real sin mocks forzados (`aec6283`), pantalla blanca
+corregida (`6330489`), CORS allowlist + PUT (`7fdb009`/`932a71a`), media
+`images.merkee.shop` OAC (`91ed871`/`02167cd`), categoría preservada en productos
+(`b7febd7`), soft-delete operativa y banners toggle. **Histórico 2026-08-18:**
+entrega con API local OK pero AWS no operativo (ECR 0, ECS 1/0, puertos/health
+desalineados, DNS/CORS/media fake, admin mocks forzados `VITE_USE_MOCKS=true`,
+carrito guest roto, checkout stub, imágenes `url` vacía, sesión 10m). **Postentrega
+2026-08-21:** ECS estable, ECR publicado, `cookie-parser` + `JwtPort.verify` +
+`clearCookie` (`932a71a`), sesión 30m (`580ff8f`), cart guest→cliente transfer
+(`8948426`/`fe0b121`). No se afirma despliegue productivo terminado; **no se
+declara producción lista** — gates RDS público, observabilidad y legal siguen
+abiertos. No se solicitan secretos por chat. Ver `../../README.md` y
+`../../docs/DEPLOYMENT_STATUS.md` (trazabilidad histórica + estado verificado
+2026-08-21, fechado, puede cambiar).
 
 ## Notas de seguridad
 
