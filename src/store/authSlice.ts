@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { authApi, passwordApi } from '../api/client';
+import { authApi, passwordApi, clearRefreshState } from '../api/client';
 import { mockApi } from '../api/mocks/mockApi';
 import type { UserResponse } from '../types/api';
 
@@ -43,6 +43,19 @@ export const fetchProfile = createAsyncThunk(
       return await api.getProfile();
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Error al obtener perfil');
+    }
+  }
+);
+
+export const refresh = createAsyncThunk(
+  'auth/refresh',
+  async (_, { rejectWithValue }) => {
+    try {
+      const api = USE_MOCKS ? mockApi.auth : authApi;
+      const response = await api.refreshToken();
+      return response.user;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Sesión expirada');
     }
   }
 );
@@ -116,6 +129,20 @@ const authSlice = createSlice({
         state.mustChangePassword = action.payload.must_change_password;
       })
       .addCase(fetchProfile.rejected, (state) => {
+        state.user = null;
+        state.isAuthenticated = false;
+        state.mustChangePassword = false;
+      })
+      // Refresh (restauración silenciosa de sesión)
+      .addCase(refresh.fulfilled, (state, action: PayloadAction<UserResponse>) => {
+        state.user = action.payload;
+        state.isAuthenticated = true;
+        state.mustChangePassword = action.payload.must_change_password;
+      })
+      .addCase(refresh.rejected, (state) => {
+        // Limpiar timer de refresh, promise y token en memoria para que
+        // la sesión quede completamente inconsistente y no se reintente.
+        clearRefreshState();
         state.user = null;
         state.isAuthenticated = false;
         state.mustChangePassword = false;

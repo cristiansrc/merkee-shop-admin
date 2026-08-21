@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { getLocalizedError, extractErrorMessage } from './client';
+import { getLocalizedError, extractErrorMessage, decodeAccessTokenExpiry, setAccessToken, getAccessToken, clearRefreshState } from './client';
+
+function b64url(obj: unknown): string {
+  return btoa(JSON.stringify(obj))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
 
 describe('Error Localization', () => {
   describe('getLocalizedError', () => {
@@ -99,6 +106,60 @@ describe('Error Localization', () => {
     it('debería retornar fallback para null/undefined', () => {
       expect(extractErrorMessage(null, 'Fallback')).toBe('Fallback');
       expect(extractErrorMessage(undefined, 'Fallback')).toBe('Fallback');
+    });
+  });
+
+  describe('decodeAccessTokenExpiry', () => {
+    it('decodifica el exp de un JWT en milisegundos', () => {
+      const token = `header.${b64url({ exp: 1700000000, sub: 'u1' })}.signature`;
+      expect(decodeAccessTokenExpiry(token)).toBe(1700000000 * 1000);
+    });
+
+    it('retorna null para un token malformado', () => {
+      expect(decodeAccessTokenExpiry('no-es-un-jwt')).toBeNull();
+      expect(decodeAccessTokenExpiry('')).toBeNull();
+    });
+
+    it('retorna null cuando el payload no tiene exp numérico', () => {
+      const token = `header.${b64url({ sub: 'u1' })}.signature`;
+      expect(decodeAccessTokenExpiry(token)).toBeNull();
+    });
+  });
+
+  describe('access token en memoria (sin storage)', () => {
+    it('no persiste el token en localStorage ni sessionStorage', () => {
+      localStorage.clear();
+      sessionStorage.clear();
+      setAccessToken('test-token');
+      expect(getAccessToken()).toBe('test-token');
+      expect(localStorage.getItem('access_token')).toBeNull();
+      expect(sessionStorage.getItem('access_token')).toBeNull();
+      expect(localStorage.length).toBe(0);
+      expect(sessionStorage.length).toBe(0);
+    });
+
+    it('permite limpiar el token en memoria', () => {
+      setAccessToken('test-token');
+      setAccessToken(null);
+      expect(getAccessToken()).toBeNull();
+    });
+  });
+
+  describe('clearRefreshState', () => {
+    it('limpia el access token en memoria', () => {
+      setAccessToken('some-access-token');
+      expect(getAccessToken()).toBe('some-access-token');
+
+      clearRefreshState();
+
+      expect(getAccessToken()).toBeNull();
+    });
+
+    it('es idempotente: llamar dos veces no lanza error', () => {
+      setAccessToken('token');
+      clearRefreshState();
+      clearRefreshState();
+      expect(getAccessToken()).toBeNull();
     });
   });
 });

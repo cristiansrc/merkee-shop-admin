@@ -44,17 +44,90 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor para manejar errores de autenticación
+// ── Refresh silencioso (single-flight + retry único, sin bucle) ──────────
+
+let refreshPromise: Promise<boolean> | null = null;
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Decodifica la expiración (`exp`) de un JWT de acceso (ms epoch). */
+export function decodeAccessTokenExpiry(token: string): number | null {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const json = JSON.parse(atob(normalized)) as { exp?: unknown };
+    return typeof json.exp === 'number' ? json.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+function redirectToLogin(): void {
+  if (
+    window.location.pathname !== '/login' &&
+    !window.location.pathname.startsWith('/activation')
+  ) {
+    window.location.href = '/login';
+  }
+}
+
+async function tryRefresh(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        await authApi.refreshToken();
+        return true;
+      } catch {
+        return false;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+  }
+  return refreshPromise;
+}
+
+/** Programa un refresh proactivo ~60 s antes de la expiración del access token. */
+export function scheduleRefresh(token: string): void {
+  if (refreshTimer) clearTimeout(refreshTimer);
+  const expiry = decodeAccessTokenExpiry(token);
+  if (!expiry) return;
+  const delay = Math.max(expiry - Date.now() - 60_000, 1_000);
+  refreshTimer = setTimeout(() => {
+    void tryRefresh();
+  }, delay);
+}
+
+/** Limpia todo el estado de refresh: timer programado, promise single-flight y token en memoria. */
+export function clearRefreshState(): void {
+  if (refreshTimer) {
+    clearTimeout(refreshTimer);
+    refreshTimer = null;
+  }
+  refreshPromise = null;
+  setAccessToken(null);
+}
+
+// Interceptor para manejar errores de autenticación con refresh silencioso
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expirado o inválido
-      setAccessToken(null);
-      // Redirigir a login si no estamos ya en login
-      if (window.location.pathname !== '/login' && !window.location.pathname.startsWith('/activation')) {
-        window.location.href = '/login';
+  async (error) => {
+    const original = error.config;
+    const status = error.response?.status;
+    const isRefreshCall = typeof original?.url === 'string' && original.url.includes('/auth/refresh');
+
+    if (status === 401 && original && !original._retried && !isRefreshCall) {
+      // Reintentar UNA sola vez tras un refresh exitoso (sin bucle).
+      original._retried = true;
+      const refreshed = await tryRefresh();
+      if (refreshed) {
+        return apiClient(original);
       }
+    }
+
+    if (status === 401) {
+      setAccessToken(null);
+      redirectToLogin();
     }
     // 403 INITIAL_PASSWORD_CHANGE_REQUIRED se maneja en el AuthGuard
     return Promise.reject(error);
@@ -111,12 +184,14 @@ export const authApi = {
   login: async (email: string, password: string): Promise<SessionResponse> => {
     const response = await apiClient.post<SessionResponse>('/auth/login', { email, password });
     setAccessToken(response.data.access_token);
+    scheduleRefresh(response.data.access_token);
     return response.data;
   },
 
   logout: async (): Promise<void> => {
     await apiClient.post('/auth/logout');
     setAccessToken(null);
+    if (refreshTimer) clearTimeout(refreshTimer);
   },
 
   getProfile: async (): Promise<UserResponse> => {
@@ -127,6 +202,7 @@ export const authApi = {
   refreshToken: async (): Promise<SessionResponse> => {
     const response = await apiClient.post<SessionResponse>('/auth/refresh');
     setAccessToken(response.data.access_token);
+    scheduleRefresh(response.data.access_token);
     return response.data;
   },
 };

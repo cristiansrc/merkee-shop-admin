@@ -75,7 +75,7 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
         }))
       );
     } else {
-      setCategoryId(categories[0]?.id || '');
+      setCategoryId('');
       setName('');
       setDescription('');
       setRegularPriceCop(0);
@@ -85,7 +85,15 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       setImages([]);
     }
     setFormError(null);
-  }, [product, categories, open]);
+  }, [product, open]);
+
+  // Auto-seleccionar primera categoría cuando llegan después del montaje
+  // (solo para productos nuevos donde categoryId sigue vacío).
+  useEffect(() => {
+    if (!product && open && !categoryId && categories.length > 0) {
+      setCategoryId(categories[0].id);
+    }
+  }, [product, open, categoryId, categories]);
 
   const handleAddImage = () => {
     if (images.length >= 10) {

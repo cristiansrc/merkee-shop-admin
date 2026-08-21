@@ -1,6 +1,6 @@
 import type { AuthProvider } from '@refinedev/core';
 import { store } from '../store';
-import { login as loginThunk, logout as logoutThunk, fetchProfile } from '../store/authSlice';
+import { login as loginThunk, logout as logoutThunk, refresh as refreshThunk } from '../store/authSlice';
 
 /**
  * AuthProvider que integra el sistema de autenticación existente (Redux + API)
@@ -36,7 +36,8 @@ export const authProvider: AuthProvider = {
   },
 
   /**
-   * Verifica si el usuario está autenticado intentando obtener el perfil.
+   * Verifica si el usuario está autenticado intentando restaurar la sesión
+   * con refresh silencioso (cookie HttpOnly) y, si aplica, el perfil.
    */
   check: async () => {
     const state = store.getState();
@@ -44,14 +45,15 @@ export const authProvider: AuthProvider = {
       return { authenticated: true };
     }
 
-    // Si no está autenticado, intentar refrescar la sesión
+    // Restaurar sesión: refresh silencioso (si la cookie de refresh es válida)
     try {
-      const result = await store.dispatch(fetchProfile());
-      if (fetchProfile.fulfilled.match(result)) {
-        return { authenticated: true };
+      const refreshResult = await store.dispatch(refreshThunk());
+      if (!refreshThunk.fulfilled.match(refreshResult)) {
+        throw new Error('no session');
       }
+      return { authenticated: true };
     } catch {
-      // Ignorar errores
+      // Sin cookie de refresh válida: no autenticado
     }
 
     return {

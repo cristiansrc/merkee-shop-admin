@@ -114,6 +114,67 @@ describe('authSlice', () => {
     expect(state.mustChangePassword).toBe(false);
   });
 
+  it('debería manejar refresh fulfilled (restauración silenciosa)', () => {
+    const mockUser = {
+      id: '1',
+      email: 'admin@test.com',
+      role: 'admin' as const,
+      display_name: 'Admin',
+      must_change_password: false,
+      phone: null,
+    };
+
+    store.dispatch({ type: 'auth/refresh/fulfilled', payload: mockUser });
+
+    const state = store.getState().auth;
+    expect(state.user).toEqual(mockUser);
+    expect(state.isAuthenticated).toBe(true);
+    expect(state.mustChangePassword).toBe(false);
+  });
+
+  it('debería manejar refresh rejected (sesión expirada)', () => {
+    store.dispatch({ type: 'auth/refresh/rejected', payload: 'Sesión expirada' });
+
+    const state = store.getState().auth;
+    expect(state.user).toBeNull();
+    expect(state.isAuthenticated).toBe(false);
+    expect(state.mustChangePassword).toBe(false);
+  });
+
+  it('debería limpiar toda la sesión cuando refresh rejected ocurre con sesión activa', () => {
+    // Simular sesión activa previa
+    const mockUser = {
+      id: '1',
+      email: 'admin@test.com',
+      role: 'admin' as const,
+      display_name: 'Admin',
+      must_change_password: false,
+      phone: null,
+    };
+
+    store = configureStore({
+      reducer: { auth: authReducer },
+      preloadedState: {
+        auth: {
+          user: mockUser,
+          isAuthenticated: true,
+          loading: false,
+          error: null,
+          mustChangePassword: false,
+        },
+      },
+    });
+
+    // Refresh falla → sesión debe quedar completamente inconsistente
+    store.dispatch({ type: 'auth/refresh/rejected', payload: 'Sesión expirada' });
+
+    const state = store.getState().auth;
+    expect(state.user).toBeNull();
+    expect(state.isAuthenticated).toBe(false);
+    expect(state.mustChangePassword).toBe(false);
+    expect(state.error).toBeNull(); // refresh.rejected no setea error (es silencioso)
+  });
+
   it('debería manejar changePassword fulfilled', () => {
     // Estado con must_change_password true
     store = configureStore({

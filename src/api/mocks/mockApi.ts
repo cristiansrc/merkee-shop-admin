@@ -194,6 +194,15 @@ export const mockApi = {
       return mockUser;
     },
 
+    refreshToken: async (): Promise<SessionResponse> => {
+      await delay(300);
+      return {
+        access_token: 'mock-jwt-token',
+        expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+        user: mockUser,
+      };
+    },
+
     logout: async (): Promise<void> => {
       await delay(200);
     },
